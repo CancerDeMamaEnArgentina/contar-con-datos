@@ -1,0 +1,1059 @@
+/* ============================================================
+   MODULO3.CSS — Capítulo 3 "El futuro" — Meli — prefijo: me-
+   ============================================================
+   QUÉ HACE ESTE ARCHIVO: los estilos propios de la tarjeta del
+   Capítulo 3 y de sus puntos/grillas. Igual que en modulo1.css, todo
+   lo que empieza con "me-" es propio de este módulo; todo lo que
+   empieza con "ui-" es un componente COMPARTIDO (style.css) que se
+   reutiliza tal cual -- acá eso incluye hasta la tarjeta y las
+   pestañas (.ui-panel, .ui-tabs, .ui-tab, .ui-tabpanel, .ui-seg,
+   .ui-visual, .ui-src...), porque el HTML del módulo 3 está armado
+   para aprovecharlos directamente, en vez de reinventarlos con otro
+   nombre como hace el módulo 1 con sus pestañas en píldora.
+
+   Convención de nombres de este archivo:
+     .me-card      -> la tarjeta completa (ver index.html: lleva las
+                      clases "ui-panel me-card" juntas)
+     .me-prompt    -> la pista de interacción con el punto que pulsa
+                      ("Cambiá entre..."), antes de cada .ui-seg
+     .me-dotgrid   -> el contenedor CSS Grid de cada grilla de puntos
+     .me-dot       -> cada punto individual (y sus variantes .me-lit /
+                      .me-new, según qué representa)
+     .me-btn       -> botón de acción suelto (panel 2: "Ver qué marca
+                      la IA" / "Volver a ocultar")
+     .me-answer    -> la "respuesta" en rosa que se revela al tocar
+                      (ambos paneles)
+   ============================================================ */
+
+/* .me-prompt/.me-prompt-dot: MISMA idea visual que .em-prompt-tipo/
+   .em-prompt-pct del módulo 1 (punto rosa que pulsa + texto más grande
+   y CENTRADO, no la variante chica/izquierda de .em-prompt a secas) --
+   pedido explícito de Meli: "idéntico al módulo 1". Se duplica acá en
+   vez de compartirla en style.css a propósito: la de módulo 1 tiene
+   lógica propia (se oculta con [hidden] al revelar la respuesta de
+   "Casos por tipo") ya probada y en producción; tocarla para volverla
+   genérica corría el riesgo de romper algo ahí sin necesidad, cuando
+   acá alcanza con repetir el mismo puñado de reglas. A diferencia de
+   antes, el prompt del panel 2 SÍ se oculta (modulo3.js le pone
+   [hidden] apenas se toca el botón "Ver qué marca la IA" -- una vez
+   revelado el resultado, "Tocá el botón..." deja de tener sentido),
+   por eso hace falta el mismo override que módulo1.css ya tiene para
+   ".em-prompt[hidden]" (ver más abajo): .me-prompt también define su
+   propio "display", que empata en especificidad contra el [hidden]
+   del navegador y le gana si no se fuerza acá. */
+.me-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  color: var(--rose-strong);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 16px;
+}
+.me-prompt[hidden] {
+  display: none;
+}
+.me-prompt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rose-strong);
+  flex: none;
+  animation: me-dot-pulse 1.4s infinite;
+}
+@keyframes me-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--rose-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 111, 156, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-prompt-dot {
+    animation: none;
+  }
+}
+
+/* .me-btn: botón de acción único del panel 2 ("Ver qué marca la IA" /
+   "Volver a ocultar"). Antes vivía adentro de un .ui-seg (la píldora
+   de selector compartida) solo para heredarle el aspecto -- pero esa
+   barra ancha con borde alrededor es visualmente "el resto" del
+   selector de 2 botones de la OTRA pestaña; acá, con un solo botón
+   suelto, se leía como un contenedor vacío. .me-btn es la MISMA idea
+   visual que .em-btn del módulo 1 (botón-contorno, no relleno, pensado
+   para una sola acción en vez de un grupo de opciones) -- se duplica
+   acá en vez de compartirla, mismo criterio que .me-prompt arriba. */
+.me-btn {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--rose-strong);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  margin-bottom: 16px;
+  /* .ui-panel es flex-column: por default, un <button> como hijo
+     directo se ESTIRA al ancho completo (align-self:stretch, el
+     comportamiento de fábrica de flex) -- se veía como una barra
+     ancha, no como un botón chico. align-self:center lo saca de ese
+     estiramiento Y lo centra horizontalmente (pedido de Meli). width
+     fijo (no "ajustado al texto") para que los 2 estados del botón
+     ("Ver qué marca la IA" / "Volver a ocultar", textos de distinto
+     largo) midan siempre lo mismo -- pidió Meli que no "salte" de
+     tamaño al cambiar de texto. */
+  align-self: center;
+  width: 230px;
+  max-width: 100%;
+  text-align: center;
+}
+.me-btn:hover {
+  background: rgba(255, 111, 156, 0.12);
+}
+/* Estado "revelado" (aria-pressed lo pone modulo3.js): relleno rosa,
+   igual criterio que el resto de los botones activos del sitio. */
+.me-btn[aria-pressed='true'] {
+  background: var(--rose-strong);
+  color: #1a0510;
+  border-color: var(--rose-strong);
+}
+
+/* Botones activos de .ui-seg (selector "Un radiólogo"/"IA sola" del
+   panel 1, y el botón único "Ver qué marca la IA" del panel 2): la
+   clase compartida (ver style.css) ya usa el mismo color de fondo que
+   .em-tab.active de módulo 1 (var(--rose-strong) + texto oscuro) -- lo
+   único que le faltaba para ser IDÉNTICA es el resplandor (box-shadow)
+   que sí tiene .em-tab.active. Se agrega acá, scopeado a .me-card, en
+   vez de tocar la regla compartida .ui-seg en style.css -- así no se
+   le agrega un brillo que nadie pidió a otros usos futuros de .ui-seg. */
+.me-card .ui-seg button[aria-pressed='true'] {
+  box-shadow: 0 6px 18px rgba(255, 111, 156, 0.35);
+}
+
+/* Más separación de "Fuente" que el valor de base de .ui-note (10px,
+   ver style.css) -- scopeado a este módulo nomás, para no afectar la
+   de módulo 1. */
+.me-card .ui-note {
+  margin-top: 22px;
+}
+
+/* .me-answer: la "Respuesta" en rosa que solo se ve al revelar el
+   resultado -- en el panel 1 ("Sí: casi 2 cánceres más...") y en el
+   panel 2 ("La IA habría marcado alrededor de 25 de cada 100."). Es
+   un <p>, así que sin esto tomaría el margen por defecto del
+   navegador (1em arriba y abajo) -- se lo resetea a un valor chico.
+   Antes el panel 2 usaba .ui-big (el número grande, pensado para
+   cifras cortas tipo "7,5") para toda la oración completa: en la
+   columna angosta de .ui-stats se partía en muchas líneas y quedaba
+   casi ilegible -- .me-answer es texto normal en negrita, no "número
+   grande", así que envuelve bien en cualquier ancho. */
+.me-answer {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 2px 0 0;
+}
+
+/* El ajuste de espaciado título->tarjeta que antes vivía acá, SOLO
+   para el capítulo 3 (porque tenía más contenido y necesitaba ganar
+   altura), ahora es el valor COMPARTIDO por los 3 capítulos -- ver
+   .chapter-title/.chapter-header/.chapter-eyebrow en style.css. Se
+   sacó el override de acá porque ya no hace falta: el valor general
+   es el mismo que este capítulo necesitaba. */
+
+/* ============ TARJETA PRINCIPAL ============
+     La tarjeta visible es la de AFUERA: en el HTML lleva las clases
+     "ui-panel me-card" juntas (mismo molde que .em-card del módulo
+     1 -- ver modulo1.css), así las dos tarjetas miden exactamente lo
+     mismo (ancho, padding, fondo con blur) sin que cada módulo tenga
+     que definir su propio tamaño. .me-card solo agrega el margen
+     inferior puntual de este módulo. */
+.me-card {
+  margin-bottom: 8px;
+}
+/* La descripción debajo del título ("El futuro también se construye
+   con prevención...") -- +1px respecto del tamaño de .ui-sub
+   compartida (0.84rem, style.css), pedido de Emi. El espacio entre el
+   título y esta descripción lo da .ui-card-title con la variable
+   compartida --ui-gap-titulo (style.css), igual que en los módulos 1
+   y 2. */
+.me-card > .ui-sub {
+  font-size: calc(0.84rem + 1px);
+}
+
+/* Las 2 pestañas (.ui-tabpanel, "1.000 mujeres en control" / "Las
+     que se escapaban") YA NO tienen su propia tarjeta adentro: antes
+     cada una envolvía su contenido en un .ui-panel con fondo + borde
+     + blur PROPIOS -- lo que se veía como "una tarjeta adentro de
+     otra tarjeta" ahora que .me-card ya puso ese fondo una sola vez,
+     afuera de las dos. Esta regla les saca el fondo/borde/padding a
+     esos paneles internos, pero NO les toca position/display/height
+     (que .ui-panel sigue aportando, y que la pestaña 2 -- ver más
+     abajo -- todavía necesita para poder centrar su contenido
+     verticalmente dentro del espacio disponible). */
+.me-card .ui-tabpanel > .ui-panel {
+  background: none;
+  border: none;
+  backdrop-filter: none;
+  padding: 0;
+}
+
+/* .ui-tabpanel (la pestaña compartida, definida en style.css) pasa
+     de una pestaña a otra con un FUNDIDO de 0,35 segundos
+     (transition:opacity): mientras una se apaga, la otra se prende,
+     y por un instante las dos se ven parcialmente superpuestas.
+
+     Eso se veía bien ANTES, cuando cada pestaña tenía su propio
+     fondo/borde (ver la regla de arriba) que las separaba
+     visualmente incluso durante el cruce. Pero ahora que esa tarjeta
+     propia se sacó -- la única tarjeta visible es la de afuera --
+     durante esos 0,35s se ve el CONTENIDO de las 2 pestañas mezclado
+     sin nada que las separe (las 2 grillas de puntos superpuestas, 2
+     botones "Fuente" uno encima del otro): se lee como si el sitio
+     estuviera roto, aunque dure solo un instante.
+
+     Por eso, acá anulamos esa transición: el cambio de pestaña queda
+     INSTANTÁNEO (sin cruce/fundido) en este módulo. */
+.me-card .ui-tabpanel {
+  transition: none;
+}
+
+/* ============================================================
+     GRILLA DE PUNTOS (.me-dotgrid) -- paneles 1 y 2
+     Cada punto es un <div class="me-dot"> dentro de un contenedor
+     CSS Grid, la misma técnica que usa el waffle del Capítulo 1
+     (ver .em-waffle-grid en modulo1.css) -- en una versión anterior
+     de este módulo, los puntos se dibujaban con <svg>/<circle>; se
+     cambió a <div> para que los 2 capítulos compartan un solo
+     enfoque de "grilla que se pinta según datos", más simple.
+     El NÚMERO DE COLUMNAS de cada grilla se fija "inline" en el
+     atributo style del HTML (style="grid-template-columns:
+     repeat(40,1fr)" para el panel 1, repeat(20,1fr) para el panel 2),
+     porque depende de cuántos puntos tiene cada visualización
+     (1.000 vs. 100) -- no tendría sentido fijarlo acá en el CSS.
+     ============================================================ */
+.me-dotgrid {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+}
+/* Cada punto individual arranca "apagado": usa la variable
+     compartida --dot-off (definida en :root, style.css) -- un blanco
+     bien translúcido, el mismo que usaría cualquier otro módulo para
+     representar "sin dato todavía".
+       aspect-ratio:1   -> mantiene cada punto cuadrado (y con
+                           border-radius:50%, circular) sin importar
+                           cuántas columnas tenga la grilla ni el
+                           ancho real en pantalla
+       transition:background -> cuando el JS le cambia la clase (a
+                           .me-lit o .me-new), el color cambia de a
+                           poco en vez de saltar de golpe */
+.me-dot {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--dot-off);
+  transition: background 0.5s ease;
+}
+/* "Cáncer detectado" (la tasa BASE, sin IA): color ámbar
+     (--flame, variable compartida), con un resplandor sutil del
+     mismo color alrededor (box-shadow) -- reemplaza al círculo
+     ".me-glow" aparte que existía en la versión anterior con SVG;
+     acá, al ser más simple la técnica (div en vez de 2 círculos
+     superpuestos), el brillo es directamente un box-shadow en el
+     punto mismo. */
+.me-dot.me-lit {
+  background: var(--flame);
+  box-shadow: 0 0 6px rgba(255, 179, 92, 0.7);
+}
+/* "Detectado gracias a la IA" (la diferencia que suma el apoyo de
+     IA por encima de la tasa base): rosa fuerte (--dot-pink), mismo
+     resplandor pero en rosa. Esta MISMA clase se usa en los 2
+     paneles: tanto para los puntos "nuevos" del panel 1 (los que se
+     encienden solo con IA activada) como para los cánceres de
+     intervalo "recuperados" del panel 2 -- en los dos casos
+     representan lo mismo conceptualmente: "esto lo encontró la IA". */
+.me-dot.me-new {
+  background: var(--dot-pink);
+  box-shadow: 0 0 7px rgba(255, 111, 156, 0.8);
+}
+
+/* ============================================================
+     PANEL 2 ("Los que no se detectan"): ajustes puntuales de layout
+     Este panel tiene MENOS contenido que el panel 1, pero la tarjeta
+     -- al ser un "grid-stack" (ver .ui-panels en style.css) --
+     siempre mide el alto del panel MÁS alto de los dos. Sin este
+     ajuste, el panel 2 quedaría con todo su contenido pegado arriba
+     y un hueco vacío grande abajo.
+     ("Fuente" ya no vive adentro de los paneles -- ver index.html,
+     ahora es una sola, compartida, después de "Límites" al final de
+     toda la tarjeta -- así que acá no hace falta sacarla del flujo
+     ni nada parecido, solo centrar .ui-visual.) */
+/* margin-top/bottom:auto en .ui-visual (que es hijo directo de
+     .ui-panel, el cual es flex-column) hace que ese elemento absorba
+     TODO el espacio libre sobrante, repartido mitad arriba/mitad
+     abajo suyo -- empujándolo al CENTRO vertical del espacio
+     disponible dentro del panel. El texto de arriba (.ui-sub/botón)
+     no se mueve (queda pegado arriba, como siempre). */
+#me-tabpanel-2 .ui-visual {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+@media (min-width: 680px) {
+  /* 65% en vez del 42% que usa la grilla del panel 1 (ver
+       .ui-visual .ui-field en style.css): como en este panel 2 no hay
+       .ui-stats compitiendo por texto largo al lado (son apenas 2
+       líneas de resultado), la grilla puede ocupar bastante más
+       ancho disponible -> cada punto individual sale más grande y
+       se ve mejor. */
+  #me-tabpanel-2 .ui-visual .ui-field {
+    flex: 0 0 65%;
+  }
+}
+
+/* Respeta la preferencia de accesibilidad "reducir movimiento" del
+     sistema operativo: si está activada, el cambio de color de los
+     puntos (apagado -> encendido) pasa a ser instantáneo, sin la
+     transición suave de .5s que tiene por defecto. */
+@media (prefers-reduced-motion: reduce) {
+  .me-dot {
+    transition: none;
+  }
+}
+
+/* ============ PANTALLAS BAJAS (alto chico) ============
+   Mismo criterio que style.css/modulo1.css (ver ahí la explicación
+   general): este módulo nunca había necesitado su propio ajuste acá
+   (antes la tarjeta era más baja que las de módulo 1/2, le sobraba
+   margen) -- pero al agrandarla para emparejar su altura con las
+   otras 2 (.me-prompt y .me-card .ui-note, más arriba), ese margen
+   nuevo también había que achicarlo en pantallas bajas, o volvía a
+   aparecer la barra de scroll (probado contra los 601px reales de
+   Brenda). */
+@media (max-height: 760px) {
+  .me-prompt {
+    margin-bottom: 3px;
+  }
+  .me-card .ui-note {
+    margin-top: 4px;
+  }
+  .me-answer {
+    margin-top: 0;
+  }
+  .me-card .ui-src {
+    margin-top: 0;
+  }
+  .me-card .ui-sub {
+    margin-bottom: 2px;
+  }
+  .me-card .ui-seg {
+    margin-bottom: 2px;
+  }
+  .me-btn {
+    margin-bottom: 6px;
+  }
+  .me-dotgrid {
+    gap: 2px;
+  }
+  .me-card {
+    margin-bottom: 0;
+  }
+}
+
+/* Único botón del módulo 3 ("Final"): centrado abajo de la tarjeta. */
+.me-final {
+  align-self: center;
+  margin-top: auto;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--rose-strong);
+  color: #1a0510;
+  border: 1px solid var(--rose-strong);
+  border-radius: 999px;
+  padding: 6px 20px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255, 111, 156, 0.35);
+  transition: filter 0.2s;
+}
+.me-final:hover {
+  filter: brightness(1.1);
+}
+
+/* ============================================================
+   BUSCADOR DE MAMÓGRAFOS (pestaña 3) — lazo de puntos animado
+   ============================================================
+   Se agregó al final de modulo3.css. Todo con prefijo me-.
+   Estructura (ver index.html, #me-tabpanel-3):
+     .me-search   -> caja de búsqueda + sugerencias
+     .me-finder   -> fila: .me-stage (canvas con los puntos) + .me-side (lista)
+   ============================================================ */
+
+.me-search {
+  position: relative;
+  width: 100%;
+  margin: 0 0 10px;
+  font-family: var(--sans);
+  color: var(--text);
+}
+.me-search-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+}
+.me-search-box {
+  position: relative;
+}
+.me-search-input {
+  width: 100%;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 9px 42px 9px 18px;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.me-search-input::placeholder {
+  color: var(--text-dim);
+}
+.me-search-input:focus {
+  border-color: var(--rose-strong);
+  box-shadow: 0 0 0 3px rgba(255, 111, 156, 0.2);
+}
+.me-search-input:placeholder-shown:not(:focus) {
+  animation: me-search-pulse 2.4s ease-in-out infinite;
+}
+.me-search-input:placeholder-shown:not(:focus)::placeholder {
+  animation: me-search-hint 2.4s ease-in-out infinite;
+}
+@keyframes me-search-pulse {
+  0%,
+  100% {
+    border-color: var(--panel-border);
+    box-shadow: 0 0 0 0 rgba(255, 111, 156, 0);
+  }
+  50% {
+    border-color: var(--rose-strong);
+    box-shadow: 0 0 0 4px rgba(255, 111, 156, 0.2);
+  }
+}
+@keyframes me-search-hint {
+  0%,
+  100% {
+    color: var(--text-dim);
+  }
+  50% {
+    color: var(--text);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-search-input:placeholder-shown:not(:focus),
+  .me-search-input:placeholder-shown:not(:focus)::placeholder {
+    animation: none;
+  }
+}
+.me-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.me-search-clear:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+.me-search-clear[hidden] {
+  display: none;
+}
+
+/* Lista de sugerencias (predicción) */
+.me-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.me-suggest[hidden] {
+  display: none;
+}
+.me-suggest li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.me-suggest li small {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.me-suggest li strong {
+  color: var(--rose-strong);
+  font-weight: 600;
+}
+.me-suggest li[aria-selected='true'],
+.me-suggest li:hover {
+  background: rgba(255, 111, 156, 0.14);
+}
+.me-suggest .me-suggest-empty {
+  cursor: default;
+  color: var(--text-dim);
+}
+.me-suggest .me-suggest-empty:hover {
+  background: transparent;
+}
+
+/* ---- Fila: lazo de puntos (izquierda) + resultados (derecha) ---- */
+.me-finder {
+  --me-h: clamp(200px, 38vh, 300px); /* alto compartido por el canvas y la lista */
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+}
+.me-stage {
+  position: relative;
+  flex: 1 1 55%;
+  min-width: 0;
+  height: var(--me-h);
+  border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 111, 156, 0.1), transparent 70%);
+}
+.me-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+/* Etiqueta con el nombre del mamógrafo bajo el puntero */
+.me-tip {
+  position: absolute;
+  z-index: 2;
+  max-width: 80%;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: none;
+}
+.me-tip[hidden] {
+  display: none;
+}
+
+.me-side {
+  flex: 1 1 45%;
+  min-width: 0;
+  height: var(--me-h);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+/* la pista usa .me-prompt (ya definida arriba); acá solo se ajusta */
+.me-side .me-prompt {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.me-result {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.me-result[hidden] {
+  display: none;
+}
+.me-result-title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+.me-result-title span {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.me-result-list {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  display: grid;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto; /* hay localidades con 90+ mamógrafos */
+  overflow-x: hidden;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rose-strong) var(--bg);
+}
+.me-result-item {
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--rose-strong);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  outline: none;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+  animation: me-item-in 0.4s ease both;
+}
+.me-result-item[data-tipo='privado'] {
+  border-left-color: var(--text-dim);
+}
+.me-result-item b {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.me-result-item span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.me-result-item.me-hl,
+.me-result-item:focus-visible {
+  background: rgba(255, 111, 156, 0.14);
+  border-color: var(--rose-strong);
+}
+@keyframes me-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Símbolo de Público/Privado: el MISMO que usan los puntos del canvas
+   (punto lleno = público, anillo = privado) */
+.me-pip {
+  flex: none;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rose-strong);
+  box-shadow: 0 0 6px var(--rose-glow);
+}
+.me-pip.me-ring {
+  background: var(--text-dim);
+  box-shadow: none;
+}
+.me-legend {
+  margin-top: 8px;
+}
+.me-card .me-legend + .me-fuente {
+  margin-top: 4px;
+}
+.me-legend .me-pip {
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+.me-card .me-fuente {
+  margin-top: 8px;
+}
+
+.me-sin-texto {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.me-sin-texto b {
+  color: var(--rose-strong);
+  font-weight: 600;
+}
+/* el botón compartido (.me-btn) es de 230px centrado: acá va a la izquierda y se ajusta al texto */
+.me-btn.me-sin-btn {
+  align-self: flex-start;
+  width: auto;
+  max-width: 100%;
+  margin: 8px 0 0;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+}
+.me-sin-nota {
+  margin-top: 10px;
+}
+.me-card .me-sin-nota {
+  margin-top: 10px;
+}
+
+@media (max-width: 680px) {
+  .me-finder {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .me-stage {
+    flex: none;
+    width: 100%;
+  }
+  .me-side {
+    height: auto;
+  }
+  .me-result-list {
+    max-height: 220px;
+  }
+}
+@media (max-height: 760px) {
+  .me-finder {
+    --me-h: clamp(170px, 36vh, 250px);
+  }
+  .me-search {
+    margin-bottom: 6px;
+  }
+  .me-search-label {
+    margin-bottom: 3px;
+    font-size: 0.8rem;
+  }
+  .me-search-input {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-result-item {
+    animation: none;
+  }
+}
+/* "¿Dónde vivís?" resaltado en rosa, con el mismo look de píldora
+   que el resto de los acentos rosa del sitio. */
+.me-where {
+  display: inline-block;
+  color: var(--rose-strong);
+  font-weight: 600;
+  background: rgba(255, 111, 156, 0.12);
+  border: 1px solid var(--rose-strong);
+  border-radius: 999px;
+  padding: 2px 12px;
+  margin-top: 4px;
+  box-shadow: 0 0 14px rgba(255, 111, 156, 0.3);
+}
+
+/* Cuerpo de la tarjeta: ocupa el espacio libre, así el botón queda abajo.
+   Ajustá el min-height para que la tarjeta mida lo mismo que la del módulo 1. */
+.me-body {
+  flex: 1;
+  min-height: 220px;
+}
+
+/* Botón "Final": centrado horizontalmente y pegado abajo. */
+.me-final {
+  align-self: center;
+  margin-top: auto;
+}
+/* Ajustes pedidos: buscador angosto y centrado, y pista "¿Dónde vivís?" */
+.me-search {
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.me-search-input {
+  text-align: center;
+  padding-left: 42px;
+}
+.me-prompt-donde {
+  margin: 6px 0 12px;
+}
+/* Ajustes pedidos: buscador angosto y centrado, y pista "¿Dónde vivís?" */
+.me-search {
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.me-search-input {
+  text-align: center;
+  padding-left: 42px;
+}
+.me-prompt-donde {
+  margin: 6px 0 12px;
+}
+
+/* Sin "Elegí una localidad" */
+#me-finder-prompt {
+  display: none;
+}
+
+/* "Cada punto es un mamógrafo": solo aparece cuando hay mamógrafos en pantalla */
+.me-fuente,
+.me-legend {
+  visibility: hidden;
+}
+.me-body:has(#me-result:not([hidden]) .me-result-list) .me-fuente,
+.me-body:has(#me-result:not([hidden]) .me-result-list) .me-legend {
+  visibility: visible;
+}
+/* ===== Cierre: botón Final ===== */
+.me-card {
+  position: relative;
+}
+.me-card > .ui-card-title,
+.me-card > .ui-sub,
+.me-card > .me-prompt-donde,
+.me-card > .me-body,
+.me-card > .ui-src {
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease,
+    filter 0.7s ease;
+}
+.me-card > .me-final {
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease,
+    filter 0.2s;
+}
+.me-card.me-cierre-on > .ui-card-title,
+.me-card.me-cierre-on > .ui-sub,
+.me-card.me-cierre-on > .me-prompt-donde,
+.me-card.me-cierre-on > .me-body,
+.me-card.me-cierre-on > .ui-src {
+  opacity: 0;
+  transform: translateY(-10px);
+  filter: blur(4px);
+  pointer-events: none;
+}
+.me-card.me-cierre-on > .me-final {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+.me-cierre {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 76px abajo: zona reservada para el botón "Volver a comenzar", así la
+     frase (centrada en el resto) nunca queda tapada por él */
+  padding: 28px 36px 76px;
+  text-align: center;
+  pointer-events: none;
+}
+.me-cierre[hidden] {
+  display: none;
+}
+.me-cierre {
+  container-type: inline-size; /* para que la frase rosa se ajuste al ancho de la tarjeta */
+}
+.me-cierre-frase {
+  --d: 0.8s; /* arranca cuando la tarjeta ya se desvaneció */
+  position: relative; /* para los puntitos (.title-dots) */
+  margin: 0;
+  max-width: 26em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(1rem, 4.6cqw, 2rem);
+  line-height: 1.35;
+  color: var(--text);
+  opacity: 0;
+}
+/* Misma animación que el título de la intro (introIn en style.css): sube
+   14px mientras aparece, y los puntitos rosa hacen pop alrededor. */
+.me-cierre.on .me-cierre-frase {
+  animation: introIn 0.5s ease forwards;
+  animation-delay: var(--d);
+}
+.me-cierre-acento {
+  display: block;
+  white-space: nowrap; /* la frase rosa va entera en una sola línea */
+  color: var(--rose-strong);
+  text-shadow: 0 0 22px rgba(255, 111, 156, 0.45);
+}
+.me-card .me-cierre.on .dot {
+  animation: dotPop 3.3s ease forwards;
+}
+.me-card .me-cierre.on .dot:nth-child(1) {
+  animation-delay: calc(var(--d) + 0s);
+}
+.me-card .me-cierre.on .dot:nth-child(2) {
+  animation-delay: calc(var(--d) + 0.08s);
+}
+.me-card .me-cierre.on .dot:nth-child(3) {
+  animation-delay: calc(var(--d) + 0.16s);
+}
+.me-card .me-cierre.on .dot:nth-child(4) {
+  animation-delay: calc(var(--d) + 0.24s);
+}
+.me-card .me-cierre.on .dot:nth-child(5) {
+  animation-delay: calc(var(--d) + 0.32s);
+}
+.me-card .me-cierre.on .dot:nth-child(6) {
+  animation-delay: calc(var(--d) + 0.4s);
+}
+/* ===== Pantalla final: se va el título del capítulo + botón discreto =====
+   Con la frase en pantalla (.me-cierre-on, la pone modulo3.js en el capítulo)
+   se desvanece "Capítulo 3 / El futuro". El botón "Volver a comenzar"
+   aparece abajo, tenue, a los 4 s; al tocarlo, un velo oscuro (.me-velo) tapa
+   todo antes de volver al inicio. */
+.chapter.me-cierre-on .chapter-header {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+.me-reinicio {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0; /* franja al pie de la tarjeta: no se superpone con la frase */
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 0 0 22px;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+  pointer-events: none; /* solo el botón recibe clics */
+}
+.me-reinicio[hidden] {
+  display: none;
+}
+.me-reinicio.on {
+  opacity: 1;
+}
+.me-reinicio .me-btn {
+  pointer-events: auto;
+  width: auto;
+  margin: 0;
+  padding: 6px 18px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  border-color: rgba(255, 182, 206, 0.3);
+  background: transparent;
+}
+.me-reinicio .me-btn:hover,
+.me-reinicio .me-btn:focus-visible {
+  color: var(--text);
+  border-color: var(--rose-strong);
+  background: rgba(255, 111, 156, 0.12);
+}
+.me-velo {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+.me-velo.on {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-card > .ui-card-title,
+  .me-card > .ui-sub,
+  .me-card > .me-prompt-donde,
+  .me-card > .me-body,
+  .me-card > .ui-src,
+  .me-card > .me-final {
+    transition: none;
+  }
+  .me-cierre-frase,
+  .me-cierre.on .me-cierre-frase {
+    opacity: 1;
+    animation: none;
+  }
+  .me-card .me-cierre.on .dot {
+    animation: none;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chapter.me-cierre-on .chapter-header,
+  .me-reinicio,
+  .me-velo {
+    transition: none;
+  }
+}
+
+/* ============ ESPACIO VERTICAL PAREJO (igual que módulos 1 y 2) ============
+   Descripción → "¿Dónde vivís?" → buscador ("Escribí tu localidad")
+   → gráfico: los 3 saltos usan el mismo espacio que título →
+   descripción (variable compartida --ui-gap-titulo, ver "MEDIDAS
+   COMPARTIDAS" en style.css: 20px, 14px en pantallas bajas).
+   Antes eran 12px / 12px / 10px, repartidos entre márgenes de
+   arriba y de abajo de varias reglas (algunas repetidas más arriba en
+   este archivo, otras pisadas en el @media de pantallas bajas). Este
+   bloque va AL FINAL a propósito: así les gana a todas esas reglas
+   sin tener que ir a tocarlas una por una. */
+.me-card > .ui-sub {
+  margin-bottom: var(--ui-gap-titulo);
+}
+.me-card > .me-prompt-donde {
+  margin-top: 0;
+  margin-bottom: var(--ui-gap-titulo);
+}
+.me-card .me-search {
+  margin-bottom: var(--ui-gap-titulo);
+}
+/* Gráfico (+ "Cada punto es un mamógrafo", que va junto al gráfico) →
+   botón "... una última cosa" → "Fuente" */
+.me-card > .me-final {
+  margin-top: var(
+    --ui-gap-titulo
+  ); /* el cuerpo (.me-body, flex:1) ya empuja el botón al fondo de la tarjeta */
+}
+.me-card > .ui-src {
+  margin-top: var(--ui-gap-titulo);
+}
+/* Con los espacios parejos de arriba, en pantallas bajas (601px, la
+   compu de Bren) la tarjeta se pasaba 5px y volvía la barra de
+   scroll: el gráfico de puntos cede esos px (antes 36vh en este
+   escalón, ver el @media max-height:760px de más arriba). */
+@media (max-height: 760px) {
+  .me-finder {
+    --me-h: clamp(160px, 34vh, 250px);
+  }
+}
